@@ -11,12 +11,30 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
 
     app.set('view engine', 'ejs');
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
     app.use(express.static('public'));
     app.use(bodyParser.json());
-    
+
     app.listen(3000, function () {});
     app.put('/quotes', (req, res) => {
-      console.log(req.body);
+      console.log(req.body, 20);
+      quotesCollection
+        .findOneAndUpdate(
+          { name: 'Yoda' },
+          {
+            $set: {
+              name: req.body.name,
+              quote: req.body.quote,
+            },
+          },
+          {
+            upsert: true,
+          }
+        )
+        .then(result => {
+          res.json('Success`');
+        })
+        .catch(err => console.log(err));
     });
     app.get('/', (req, res) => {
       // const cursor = db.collection('quotes').find();
@@ -35,6 +53,15 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
       quotesCollection
         .insertOne(req.body)
         .then(result => res.reDirect('/'))
+        .catch(err => console.log(err));
+    });
+    app.delete('/quotes', (req, res) => {
+      quotesCollection
+        .deleteOne({ name: req.body.name })
+        .then(result => {
+          if(result.deletedCount ===0) return res.json('No quote to delete ')
+          res.json("Deleted Darth Vader's quotes");
+        })
         .catch(err => console.log(err));
     });
   })
